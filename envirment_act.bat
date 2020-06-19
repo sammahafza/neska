@@ -1,0 +1,1 @@
+D:\programmin_projects\envs\gproject_env\Scripts\activate.ps1

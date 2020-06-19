@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
+from datetime import datetime, timedelta
 
 class UserManager(BaseUserManager):
     def create_user(self, email, first_name, last_name, password=None):
@@ -67,3 +68,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def has_module_perms(self, app_label):
         return True
+
+
+# this is the meetings model (meeting rooms)
+class Meeting(models.Model):
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_date = models.DateTimeField(auto_now_add=True)
+    expire_date = models.DateTimeField(default=datetime.now()+timedelta(days=7))
+    meeting_mid = models.CharField(max_length=20, unique=True)
+
+
+    def __str__(self):
+        return self.meeting_mid
