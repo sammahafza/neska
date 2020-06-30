@@ -1,0 +1,19 @@
+{
+  "name": "socket_server",
+  "version": "1.0.0",
+  "description": "Socket.io Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node soserver",
+    "dev": "nodemon soserver"
+  },
+  "author": "Samer Mahafza",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}

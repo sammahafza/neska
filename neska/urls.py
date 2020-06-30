@@ -14,15 +14,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
 from accounts import views as accounts_views
+from django.contrib.auth.decorators import login_required
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='index.html')),
     path('register/', accounts_views.register_view, name="register"),
     path('login/', accounts_views.login_view, name="login"),
     path('api/', include('video_app.urls')),
+    path('', login_required(TemplateView.as_view(template_name="index.html"), 
+    login_url='login')),
+    # react routings...
+    re_path(r'^meeting/\d+$', login_required(TemplateView.as_view(template_name="index.html"), 
+    login_url='login')),
+    re_path(r'^join/?$', login_required(TemplateView.as_view(template_name="index.html"), 
+    login_url='login')),
 ]

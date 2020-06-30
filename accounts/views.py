@@ -23,7 +23,7 @@ def login_view(request):
         user = authenticate(email=email, password=password)
         login(request, user)
         if next:
-            return redirect(next)
+           return redirect(next)
         return redirect('/') # here must go to the react app
 
     return render(request, 'accounts/login.html', {'form': form})

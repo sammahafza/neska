@@ -19,8 +19,8 @@ class MeetingView(viewsets.ModelViewSet):
     lookup_field = 'meeting_mid'
   
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            user = self.request.user
-            return Meeting.objects.filter(creator=user)
-        else:
-            return None
+        #if self.request.user.is_authenticated:
+            #user = self.request.user
+        return Meeting.objects.filter() #old #creator=user)
+        #else:
+            #return None
