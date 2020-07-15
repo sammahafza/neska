@@ -36,7 +36,7 @@ class JoinRoom extends Component {
       <div>
         <input onChange={this.onChangeHandler} value={this.state.mid} ref="mid_input"></input>
         <button onClick={this.join}>Join</button>
-        <h2>{this.state.error}</h2>
+        <h4>{this.state.error}</h4>
       </div>
     );
   }
