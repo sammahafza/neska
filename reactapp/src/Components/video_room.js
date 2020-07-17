@@ -7,6 +7,7 @@ import Peer from 'simple-peer';
 import './styles/video_room.css';
 
 import styled from "styled-components";
+import uuid from 'react-uuid';
 
 const Container = styled.div`
     padding: 20px;
@@ -58,6 +59,9 @@ class VideoRoom extends Component {
     me: {},
     peersRef: [],
     socketRef: null,
+    roomFull: false,
+    errorDetail: "",
+    rows: {},
   }
 
   componentDidMount = () => {
@@ -66,6 +70,8 @@ class VideoRoom extends Component {
     const mid = this.props.match.params.mid;
     const first = "Chris";
     const last = "Chris";
+
+    
 
 
 
@@ -79,7 +85,7 @@ class VideoRoom extends Component {
 
           this.state.socketRef = io("https://192.168.0.109:25000");
 
-          
+
 
           navigator.mediaDevices.getUserMedia(
             { video: videoConstraints, audio: false }
@@ -88,26 +94,30 @@ class VideoRoom extends Component {
 
               this.lVideo.current.srcObject = stream;
 
-              // this.state.socketRef.on("detailReq", () => {
-              //   console.log("detail requeted from me..");
-              //   this.state.socketRef.emit("detailRes", { first_name: first, last_name: last, email: "redfield78@yahoo.com", id: this.state.socketRef.id, room: mid, videoRef: createRef() });
-              // });
-
-              this.setState({me: 
-                { first_name: first, 
-                last_name: last, 
-                email: "redfield78@yahoo.com", 
-                id: this.state.socketRef.id, 
-                room: mid 
-              }});
+              this.setState({
+                me:
+                {
+                  first_name: first,
+                  last_name: last,
+                  email: "redfield78@yahoo.com",
+                  id: this.state.socketRef.id,
+                  room: mid
+                }
+              });
 
               this.state.socketRef.emit("join room", this.state.me);
+
+
+              this.state.socketRef.on("room full", () => {
+                this.setState({ roomFull: true });
+              });
 
               this.state.socketRef.on("all users", users => {
                 const peers = [];
                 users.forEach(user => {
                   const peer = this.createPeer(user.id, this.state.socketRef.id, stream);
                   this.state.peersRef.push({
+                    uuid: uuid(),
                     peerID: user.id,
                     peer,
                   });
@@ -115,24 +125,18 @@ class VideoRoom extends Component {
                   this.setState({ peers: peers });
 
                 });
-                  
+
               });
 
-              // this.state.socketRef.on("user joined", payload => {
-              //   const peer = this.addPeer(payload.signal, payload.callerID, stream);
-              //   this.state.peersRef.push({
-              //     peerID: payload.callerID,
-              //     peer
-              //   });
 
-              //   this.setState({ peers: this.state.peers.concat(peer) });
-              // });
+              
 
               this.state.socketRef.on("user joined", payload => {
                 const item = this.state.peersRef.find(p => p.peerID === payload.callerID);
-                if(!item) {
+                if (!item) {
                   const peer = this.addPeer(payload.signal, payload.callerID, stream);
                   this.state.peersRef.push({
+                    uuid: uuid(),
                     peerID: payload.callerID,
                     peer,
                   })
@@ -146,8 +150,10 @@ class VideoRoom extends Component {
               this.state.socketRef.on("recieved returning signal", payload => {
                 const item = this.state.peersRef.find(p => p.peerID === payload.id);
                 item.peer.signal(payload.signal);
-                
+
               });
+
+              
 
               this.state.socketRef.on("someone left", id => {
 
@@ -155,16 +161,16 @@ class VideoRoom extends Component {
 
                 const peer = this.state.peersRef.find(p => p.peerID === id);
 
-                if(peer) { 
+                if (peer) {
                   peer.peer.destroy();
                 }
                 else {
                   const peer = this.state.peersRef.find(p => p.peerID === this.state.socketRef);
-                  if(peer) peer.peer.destroy();
+                  if (peer) peer.peer.destroy();
                 }
 
-                //const removed_peers = this.state.peers.filter(p => p._connected === true);
-                //this.setState({peers: removed_peers});
+                const removed_peers = this.state.peersRef.filter(p => p.peer._connected === true);
+                this.setState({peersRef: removed_peers});
 
                 console.log("elements: ");
                 console.log(this.state.peersRef);
@@ -176,6 +182,7 @@ class VideoRoom extends Component {
             error => {
               alert("Please Check you WebCamera and try Again...");
               console.log(error);
+              this.setState({errorDetail: error.toString()});
             }
           );
 
@@ -200,20 +207,6 @@ class VideoRoom extends Component {
       console.log("signal sended");
     });
 
-    // peer.on('close', () => {
-    //   console.log("someone exited ya m'alem");
-
-    //   const peer_removed = this.state.peersRef.filter(p => p.callerID === callerID);
-
-    //   const peers = [];
-      
-    //   peer_removed.forEach(p => {
-    //     peers.push(p.peer);
-    //   });
-
-    //   this.setState({peersRef: peer_removed, peers: peers});
-    // });
-
     return peer;
   }
 
@@ -229,31 +222,6 @@ class VideoRoom extends Component {
 
     });
 
-    // peer.on('close', (err) => {
-
-    //   const peer_removed = this.state.peersRef.filter(p => p.peer._connected === true);
-
-
-    //   console.log("peers removed:");
-    //   console.log(peer_removed);
-
-    //   const peers = [];
-      
-    //   peer_removed.forEach(p => {
-    //     peers.push(p.peer);
-    //     console.log("peers: ");
-    //     console.log(peers);
-    //   });
-
-    //   this.setState({peersRef: peer_removed, peers: peers});
-
-    //   console.log("i'm closing");
-    //   console.log(this.state.peersRef);
-    //   console.log(this.state.peers);
-    
-    
-    // });
-
     peer.signal(incomingSignal);
 
     return peer;
@@ -261,20 +229,27 @@ class VideoRoom extends Component {
 
 
   render() {
-    if (this.state.isValid && !this.state.init)
-      return (
-        <div>
-          <Header></Header>
-          <Container>
-            <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
-            {this.state.peers.map((peer, index) => {
-              return (
-                <Video key={peer.channelName} peer={peer} />
-              );
-            })}
-          </Container>
-        </div>
-      );
+    if (this.state.isValid && !this.state.init) {
+      if (!this.state.roomFull)
+        return (
+          <div>
+            <Header></Header>
+            <Container>
+              <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
+              {this.state.peersRef.map((peer, index) => {
+                return (
+                  <Video key={peer.uuid} peer={peer.peer} />
+                );
+              })}
+            </Container>
+            <h2>{this.state.errorDetail}</h2>
+          </div>
+        );
+      else
+        return (
+          <h2>Meeting Room is Full :(</h2>
+        );
+    }
     else if (!this.state.isValid && !this.state.init)
       return (
         <div>

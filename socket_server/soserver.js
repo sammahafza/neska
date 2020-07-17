@@ -41,7 +41,12 @@ io.on('connection', socket => {
       const person = users.find(user => user.id === socket.id);
       if(person) { 
       usersInThisRoom = users.filter(user => user.room == person.room && user.id !== socket.id);
-      socket.emit("all users", usersInThisRoom);
+      if(usersInThisRoom.length <= 3) {
+          socket.emit("all users", usersInThisRoom);
+      }
+      else {
+          socket.emit("room full");
+      }
       }
     }
     
