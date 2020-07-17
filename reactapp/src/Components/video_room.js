@@ -1,26 +1,63 @@
-import React, { Component, createRef } from 'react';
-import Header from './subcomponents/header'
-import io from 'socket.io-client'
+import React, { Component, createRef, useEffect, useRef } from 'react';
+import Header from './subcomponents/header';
+import io from 'socket.io-client';
 
-import './styles/video_room.css'
+import Peer from 'simple-peer';
+
+import './styles/video_room.css';
+
+import styled from "styled-components";
+
+const Container = styled.div`
+    padding: 20px;
+    display: flex;
+    height: 100vh;
+    width: 90%;
+    margin: auto;
+    flex-wrap: wrap;
+`;
+
+const StyledVideo = styled.video`
+    height: 40%;
+    width: 50%;
+`;
+
+const Video = (props) => {
+  const ref = useRef();
+
+  useEffect(() => {
+    props.peer.on("stream", stream => {
+      ref.current.srcObject = stream;
+    })
+  }, []);
+
+  return (
+    <StyledVideo playsInline autoPlay ref={ref} />
+  );
+}
+
+
+const videoConstraints = {
+  height: window.innerHeight / 16,
+  width: window.innerWidth / 16
+};
 
 class VideoRoom extends Component {
 
   constructor(props) {
     super(props);
     this.lVideo = createRef();
-    this.rVideo = createRef();
+
   }
 
 
   state = {
     isValid: true,
     init: true,
-    users: [],
-    userStream: "hold",
-    peerRef: "hold",
-    socketRef: "hold",
-    otherUser: "hold",
+    peers: [],
+    me: {},
+    peersRef: [],
+    socketRef: null,
   }
 
   componentDidMount = () => {
@@ -30,65 +67,115 @@ class VideoRoom extends Component {
     const first = "Chris";
     const last = "Chris";
 
-    fetch("https://127.0.0.1:8000/api/meeting/" + mid)
-      .then(response => {
-        if (response.ok) {
+
+
+    // fetch("https://127.0.0.1:8000/api/meeting/" + mid)
+    fetch("https://192.168.0.109:8000/api/meeting/" + mid)
+      .catch(response => {
+        if (!response.ok) {
           this.setState({ isValid: true, init: false });
 
           //TODO: additional steps...
-          this.state.socketRef = io("http://localhost:25000");
 
-          this.state.socketRef.on("detailReq", () => {
-            console.log("detail requeted from me..");
-            this.state.socketRef.emit("detailRes", { first_name: first, last_name: last, email: "redfield78@yahoo.com", id: this.state.socketRef.id, room: mid, videoRef: createRef() });
-          });
+          this.state.socketRef = io("https://192.168.0.109:25000");
 
-          this.state.socketRef.on("join room", lists => { // the joining client will have this
-
-            this.setState({ users: lists, otherUser: lists[0].id });
-
-
-          });
-
-          this.state.socketRef.on("newEntry", person => { // when someone new joins 
-            //setUsers(old => [old,person]);
-            this.setState({ users: this.state.users.concat(person) });
-
-            this.callUser(person.id);
-
-            this.setState({ otherUser: person.id });
-
-
-          });
-
-
-
-          this.state.socketRef.on("offer", this.handleReciveCall);
-
-          this.state.socketRef.on("answer", this.handleAnswer);
-
-          this.state.socketRef.on("ice-candidate", this.handleNewICECandidateMsg);
-
-
-
-          this.state.socketRef.on("update-list", list => { // when someone disconnect
-            this.setState({ users: list });
-          });
-
-
+          
 
           navigator.mediaDevices.getUserMedia(
-            { video: true, audio: false }
+            { video: videoConstraints, audio: false }
           ).then(
             stream => {
 
-              this.state.users[0].videoRef.current.srcObject = stream;
-              this.setState({ userStream: stream });
+              this.lVideo.current.srcObject = stream;
+
+              // this.state.socketRef.on("detailReq", () => {
+              //   console.log("detail requeted from me..");
+              //   this.state.socketRef.emit("detailRes", { first_name: first, last_name: last, email: "redfield78@yahoo.com", id: this.state.socketRef.id, room: mid, videoRef: createRef() });
+              // });
+
+              this.setState({me: 
+                { first_name: first, 
+                last_name: last, 
+                email: "redfield78@yahoo.com", 
+                id: this.state.socketRef.id, 
+                room: mid 
+              }});
+
+              this.state.socketRef.emit("join room", this.state.me);
+
+              this.state.socketRef.on("all users", users => {
+                const peers = [];
+                users.forEach(user => {
+                  const peer = this.createPeer(user.id, this.state.socketRef.id, stream);
+                  this.state.peersRef.push({
+                    peerID: user.id,
+                    peer,
+                  });
+                  peers.push(peer);
+                  this.setState({ peers: peers });
+
+                });
+                  
+              });
+
+              // this.state.socketRef.on("user joined", payload => {
+              //   const peer = this.addPeer(payload.signal, payload.callerID, stream);
+              //   this.state.peersRef.push({
+              //     peerID: payload.callerID,
+              //     peer
+              //   });
+
+              //   this.setState({ peers: this.state.peers.concat(peer) });
+              // });
+
+              this.state.socketRef.on("user joined", payload => {
+                const item = this.state.peersRef.find(p => p.peerID === payload.callerID);
+                if(!item) {
+                  const peer = this.addPeer(payload.signal, payload.callerID, stream);
+                  this.state.peersRef.push({
+                    peerID: payload.callerID,
+                    peer,
+                  })
+                  this.setState({ peers: this.state.peers.concat(peer) });
+                }
+
+                console.log("a user joined..");
+                console.log(this.state.peersRef);
+              });
+
+              this.state.socketRef.on("recieved returning signal", payload => {
+                const item = this.state.peersRef.find(p => p.peerID === payload.id);
+                item.peer.signal(payload.signal);
+                
+              });
+
+              this.state.socketRef.on("someone left", id => {
+
+                console.log("someone left...");
+
+                const peer = this.state.peersRef.find(p => p.peerID === id);
+
+                if(peer) { 
+                  peer.peer.destroy();
+                }
+                else {
+                  const peer = this.state.peersRef.find(p => p.peerID === this.state.socketRef);
+                  if(peer) peer.peer.destroy();
+                }
+
+                //const removed_peers = this.state.peers.filter(p => p._connected === true);
+                //this.setState({peers: removed_peers});
+
+                console.log("elements: ");
+                console.log(this.state.peersRef);
+
+              });
 
             }
           ).catch(
             error => {
               alert("Please Check you WebCamera and try Again...");
+              console.log(error);
             }
           );
 
@@ -101,101 +188,75 @@ class VideoRoom extends Component {
 
   }
 
-  callUser = (userID) => {
-    const peer = this.createPeer(userID);
-    this.setState({ peerRef: peer });
-    this.state.userStream.getTracks().forEach(track => this.state.peerRef.addTrack(track, this.state.userStream));
-  }
+  createPeer = (userToSignal, callerID, stream) => {
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      stream,
+    });
 
-  createPeer = (userID) => {
-    const ICE_config = {
-      'iceServers': [
-        {
-          urls: 'stun:stun1.l.google.com:19302'
-        },
-        {
-          urls: 'turn:numb.viagenie.ca',
-          credential: 'muazkh',
-          username: 'webrtc@live.com'
-        }
-      ]
-    }
+    peer.on('signal', signal => {
+      this.state.socketRef.emit("sending signal", { userToSignal, callerID, signal });
+      console.log("signal sended");
+    });
 
-    const peer = new RTCPeerConnection(ICE_config);
-    peer.onicecandidate = this.handleICEcandidateEvent;
-    peer.ontrack = this.handleTrackEvent;
-    peer.onnegotiationneeded = () => this.handleNegotiationonNeededEvent(userID);
+    // peer.on('close', () => {
+    //   console.log("someone exited ya m'alem");
+
+    //   const peer_removed = this.state.peersRef.filter(p => p.callerID === callerID);
+
+    //   const peers = [];
+      
+    //   peer_removed.forEach(p => {
+    //     peers.push(p.peer);
+    //   });
+
+    //   this.setState({peersRef: peer_removed, peers: peers});
+    // });
 
     return peer;
-
   }
 
+  addPeer = (incomingSignal, callerID, stream) => {
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream,
+    });
 
-  handleNegotiationonNeededEvent = (userID) => {
-    this.state.peerRef.createOffer().then(offer => {
-      console.log("I created the ofer...");
-      return this.state.peerRef.setLocalDescription(offer);
-    }).then(() => {
-      const payload = {
-        target: userID,
-        caller: this.state.socketRef.id,
-        sdp: this.state.peerRef.localDescription
-      };
-      this.state.socketRef.emit("offer", payload);
-    }).catch(e => console.log(e));
-  }
+    peer.on('signal', signal => {
+      this.state.socketRef.emit("returning signal", { signal, callerID });
 
-  handleReciveCall = (incoming) => {
-    const peer = this.createPeer();
-    this.setState({ peerRef: peer });
-    const desc = new RTCSessionDescription(incoming.sdp);
-    this.state.peerRef.setRemoteDescription(desc).then(() => {
-      this.state.userStream.getTracks().forEach(track => this.state.peerRef.addTrack(track, this.state.userStream));
-    }).then(() => {
-      return this.state.peerRef.createAnswer();
-    }).then(answer => {
-      return this.state.peerRef.setLocalDescription(answer);
-    }).then(() => {
-      const payload = {
-        target: incoming.caller,
-        caller: this.state.socketRef.id,
-        sdp: this.state.peerRef.localDescription
+    });
 
-      }
-      this.state.socketRef.emit("answer", payload);
-    })
-  }
+    // peer.on('close', (err) => {
 
-  handleAnswer = (messege) => {
-    const desc = new RTCSessionDescription(messege.sdp);
-    this.state.peerRef.setRemoteDescription(desc).catch(e => console.log(e));
-  }
+    //   const peer_removed = this.state.peersRef.filter(p => p.peer._connected === true);
 
-  handleICEcandidateEvent = (e) => {
-    if (e.candidate) {
-      const payload = {
-        target: this.state.otherUser, // TODO: need to look at
-        candidate: e.candidate
-      }
 
-      this.state.socketRef.emit("ice-candidate", payload);
-    }
-  }
+    //   console.log("peers removed:");
+    //   console.log(peer_removed);
 
-  handleNewICECandidateMsg = (incoming) => {
+    //   const peers = [];
+      
+    //   peer_removed.forEach(p => {
+    //     peers.push(p.peer);
+    //     console.log("peers: ");
+    //     console.log(peers);
+    //   });
 
-    let candidate = null
-    if (incoming.sdpMid != null) {
-      candidate = new RTCIceCandidate(incoming);
-    }
+    //   this.setState({peersRef: peer_removed, peers: peers});
 
-    this.state.peerRef.addIceCandidate(candidate);
+    //   console.log("i'm closing");
+    //   console.log(this.state.peersRef);
+    //   console.log(this.state.peers);
+    
+    
+    // });
 
-  }
+    peer.signal(incomingSignal);
 
-  handleTrackEvent = (e) => {
-    console.log(this.state.users);
-    this.state.users[1].videoRef.current.srcObject = e.streams[0];
+    return peer;
   }
 
 
@@ -204,9 +265,14 @@ class VideoRoom extends Component {
       return (
         <div>
           <Header></Header>
-          <div>
-            {this.state.users.map(tag => <video className='video_element' width="320" height="240" autoPlay loop={true} ref={tag.videoRef} key={tag.id}></video>)}
-          </div>
+          <Container>
+            <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
+            {this.state.peers.map((peer, index) => {
+              return (
+                <Video key={peer.channelName} peer={peer} />
+              );
+            })}
+          </Container>
         </div>
       );
     else if (!this.state.isValid && !this.state.init)

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Header from './subcomponents/header';
 
 class JoinRoom extends Component {
 
@@ -18,7 +19,7 @@ class JoinRoom extends Component {
 
   join = () => {
     const mid = this.state.mid;
-    fetch("https://127.0.0.1:8000/api/meeting/" + mid)
+    fetch("https://192.168.0.109:8000/api/meeting/" + mid)
       .then(response => response.json())
       .then(data => {
         if (data.meeting_mid === mid) {
@@ -34,8 +35,9 @@ class JoinRoom extends Component {
   render() {
     return (
       <div>
+        <Header></Header>
         <input onChange={this.onChangeHandler} value={this.state.mid} ref="mid_input"></input>
-        <button onClick={this.join}>Join</button>
+        <button className='btn btn-success' onClick={this.join}>Join</button>
         <h4>{this.state.error}</h4>
       </div>
     );

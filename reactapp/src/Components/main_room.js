@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import Cookies from 'js-cookie';
 import { withRouter } from 'react-router-dom';
+import Header from './subcomponents/header';
+
+import { Button } from 'react-bootstrap';
 
 class MainRoom extends Component {
 
@@ -22,8 +25,8 @@ class MainRoom extends Component {
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': Cookies.get('csrftoken') },
       body: JSON.stringify({ 'meeting_mid': random_mid })
     };
-    //fetch("https://192.168.0.109:8000/api/meeting/", info)
-    fetch("https://127.0.0.1:8000/api/meeting/", info)
+    //fetch("https://127.0.0.1:8000/api/meeting/", info)
+    fetch("https://192.168.0.109:8000/api/meeting/", info)
       .then(response => response.json())
 
     this.nextPath('/meeting/' + random_mid);
@@ -32,8 +35,10 @@ class MainRoom extends Component {
   render() {
     return (
       <div>
-        <button onClick={this.create}>Create Meeting</button>
-        <button onClick={() => this.nextPath('/join')}>Join Meeting</button>
+        <Header></Header>
+        <Button className='btn btn-primary' onClick={this.create}>Create Meeting</Button>
+        Or
+        <Button className='btn btn-secondary' onClick={() => this.nextPath('/join')}>Join Meeting</Button>
       </div>
     );
   }

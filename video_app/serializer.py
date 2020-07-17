@@ -3,8 +3,8 @@ from .models import Meeting, User
 
 import logging
 logger = logging.getLogger(__name__)
-
 import datetime
+
 class MeetingSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
     creator_name = serializers.SerializerMethodField()

@@ -47,6 +47,8 @@ class Testing extends Component {
 
             this.setState({users: lists, otherUser: lists[0].id });
 
+            console.log(this.state.users);
+
 
         });
 
