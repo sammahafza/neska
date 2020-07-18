@@ -1,0 +1,25 @@
+.topheader {
+    margin-top: 10px;
+    margin: auto 5%;
+}
+
+.branding {
+    padding-top: 10px;
+    
+}
+
+.mini_text {
+    position: relative;
+    left: -5px;
+    top: 5px;
+    color: gray;
+    font-size: 15px;
+    display: inline;
+}
+
+.header {
+    height: 64px;
+    box-shadow: 0px 1px 14px 4px #d2d2d2;
+}
+
+

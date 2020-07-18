@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import Cookies from 'js-cookie';
 import { withRouter } from 'react-router-dom';
 import Header from './subcomponents/header';
-
 import { Button } from 'react-bootstrap';
+
+import "./styles/main.css";
 
 class MainRoom extends Component {
 
@@ -36,9 +37,11 @@ class MainRoom extends Component {
     return (
       <div>
         <Header></Header>
+        <div className="content_main">
         <Button className='btn btn-primary' onClick={this.create}>Create Meeting</Button>
-        Or
+        <h5 className="d-inline"> Or </h5>
         <Button className='btn btn-secondary' onClick={() => this.nextPath('/join')}>Join Meeting</Button>
+        </div>
       </div>
     );
   }

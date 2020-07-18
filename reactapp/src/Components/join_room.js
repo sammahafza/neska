@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Header from './subcomponents/header';
 
+import "./styles/main.css"
+
 class JoinRoom extends Component {
 
   state = {
@@ -27,7 +29,12 @@ class JoinRoom extends Component {
           this.nextPath('/meeting/' + mid);
         }
         else
-          this.setState({ error: "mid is invalid or expired, please try another one..." });
+          this.setState({ error: "Error: mid is invalid or expired, please try another one..." });
+      })
+      .catch(() => {
+        this.setState({ error: "Error: could not connect to the server, please try again after a while..." });
+      
+      
       });
 
   }
@@ -36,9 +43,16 @@ class JoinRoom extends Component {
     return (
       <div>
         <Header></Header>
-        <input onChange={this.onChangeHandler} value={this.state.mid} ref="mid_input"></input>
-        <button className='btn btn-success' onClick={this.join}>Join</button>
-        <h4>{this.state.error}</h4>
+        <div className= "content_join">
+        <div>
+          Enter the MID of the room to join.
+        </div>
+          <div className="pt-2">
+        <input type="number" className="w-50" onChange={this.onChangeHandler} value={this.state.mid} ref="mid_input"></input>
+        <button className='btn btn-success ml-2 w-25' onClick={this.join}>Join</button>
+        </div>
+        </div>
+        <h6 className="error">{this.state.error}</h6>
       </div>
     );
   }

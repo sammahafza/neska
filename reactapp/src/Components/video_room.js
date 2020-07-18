@@ -21,7 +21,11 @@ const Container = styled.div`
 const StyledVideo = styled.video`
     height: 40%;
     width: 50%;
+    margin: 5% auto;
 `;
+
+
+
 
 const Video = (props) => {
   const ref = useRef();
@@ -39,8 +43,8 @@ const Video = (props) => {
 
 
 const videoConstraints = {
-  height: window.innerHeight / 16,
-  width: window.innerWidth / 16
+  height: { max: window.innerHeight / 2 },
+  width: { max: window.innerWidth / 2 }
 };
 
 class VideoRoom extends Component {
@@ -61,7 +65,6 @@ class VideoRoom extends Component {
     socketRef: null,
     roomFull: false,
     errorDetail: "",
-    rows: {},
   }
 
   componentDidMount = () => {
@@ -77,8 +80,8 @@ class VideoRoom extends Component {
 
     // fetch("https://127.0.0.1:8000/api/meeting/" + mid)
     fetch("https://192.168.0.109:8000/api/meeting/" + mid)
-      .catch(response => {
-        if (!response.ok) {
+      .then(response => {
+        if (response.ok) {
           this.setState({ isValid: true, init: false });
 
           //TODO: additional steps...
@@ -88,7 +91,7 @@ class VideoRoom extends Component {
 
 
           navigator.mediaDevices.getUserMedia(
-            { video: videoConstraints, audio: false }
+            { video: true, audio: false }
           ).then(
             stream => {
 
@@ -170,7 +173,9 @@ class VideoRoom extends Component {
                 }
 
                 const removed_peers = this.state.peersRef.filter(p => p.peer._connected === true);
-                this.setState({peersRef: removed_peers});
+                const peers = this.state.peers.filter(p=> p._connected === true);
+
+                this.setState({peersRef: removed_peers, peers: peers});
 
                 console.log("elements: ");
                 console.log(this.state.peersRef);
@@ -180,9 +185,10 @@ class VideoRoom extends Component {
             }
           ).catch(
             error => {
-              alert("Please Check you WebCamera and try Again...");
-              console.log(error);
+              if(error.name == "NotAllowedError") alert("You must allow the app to use your Camera..")
+              else if (error.name == "NotFoundError") alert("Please Check your Camera or Microphone and try Again...");
               this.setState({errorDetail: error.toString()});
+              console.log(error);
             }
           );
 
@@ -234,6 +240,7 @@ class VideoRoom extends Component {
         return (
           <div>
             <Header></Header>
+            <h2>{this.state.errorDetail}</h2>
             <Container>
               <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
               {this.state.peersRef.map((peer, index) => {
@@ -242,7 +249,6 @@ class VideoRoom extends Component {
                 );
               })}
             </Container>
-            <h2>{this.state.errorDetail}</h2>
           </div>
         );
       else

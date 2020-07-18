@@ -1,0 +1,40 @@
+.content_main {
+    margin: auto;
+    max-width: 40%;
+    position: relative;
+    text-align: center;
+    top: 50px;
+}
+
+.content_join {
+    margin: auto;
+    max-width: 30%;
+    position: relative;
+    text-align: center;
+    top: 50px;
+}
+
+.error {
+    margin: auto;
+    position: relative;
+    text-align: center;
+    top: 64px;
+}
+
+@media all and (max-width: 800px) {
+    .content_main {
+        margin: auto;
+        max-width: 144px;
+        position: relative;
+        text-align: center;
+        top: 50px;
+    }   
+    .content_join {
+        margin: auto;
+        max-width: 80%;
+        position: relative;
+        text-align: center;
+        top: 50px;
+    }
+}
+ 
