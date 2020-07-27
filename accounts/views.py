@@ -3,6 +3,7 @@ from django.contrib import messages
 from .forms import UserLoginForm, RegisterForm
 from video_app.models import User
 from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.http import HttpResponseRedirect
 
 def register_view(request):
     if request.method == "POST":

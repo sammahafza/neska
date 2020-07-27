@@ -23,3 +23,9 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     def get_creator_name(self, obj):
         return str(obj.creator.first_name) + ' ' + str(obj.creator.last_name)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')

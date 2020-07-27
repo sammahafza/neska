@@ -1,0 +1,12 @@
+.myform {
+    margin: auto;
+    width: 40%;
+}
+
+@media all and (max-width: 750px)
+{
+    .myform {
+        margin: auto;
+        width: 80%;
+    }
+}

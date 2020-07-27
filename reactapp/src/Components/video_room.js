@@ -19,11 +19,20 @@ const Container = styled.div`
 `;
 
 const StyledVideo = styled.video`
-    height: 40%;
-    width: 50%;
+	position: relative;
+    height: 100%;
+    width: 100%;
     margin: 5% auto;
 `;
 
+
+const StyledDiv = styled.div`
+	position: relative;
+    height: 40%;
+    width: 50%;
+    margin: 5% auto;
+	text-align: center;
+`;
 
 
 
@@ -69,12 +78,23 @@ class VideoRoom extends Component {
 
   componentDidMount = () => {
 
+    let first = "";
+    let last = "";
+    let email = "";
+
+    fetch("https://192.168.0.109:8000/api/user/")
+      .then(response => response.json())
+      .then(data => {
+        first = data[0].first_name;
+        last = data[0].last_name;
+        email = data[0].email;
+      })
+
 
     const mid = this.props.match.params.mid;
-    const first = "Chris";
-    const last = "Chris";
 
-    
+
+
 
 
 
@@ -102,7 +122,7 @@ class VideoRoom extends Component {
                 {
                   first_name: first,
                   last_name: last,
-                  email: "redfield78@yahoo.com",
+                  email: email,
                   id: this.state.socketRef.id,
                   room: mid
                 }
@@ -121,6 +141,8 @@ class VideoRoom extends Component {
                   const peer = this.createPeer(user.id, this.state.socketRef.id, stream);
                   this.state.peersRef.push({
                     uuid: uuid(),
+                    first_name: user.first_name,
+                    last_name: user.last_name,
                     peerID: user.id,
                     peer,
                   });
@@ -132,7 +154,7 @@ class VideoRoom extends Component {
               });
 
 
-              
+
 
               this.state.socketRef.on("user joined", payload => {
                 const item = this.state.peersRef.find(p => p.peerID === payload.callerID);
@@ -140,6 +162,8 @@ class VideoRoom extends Component {
                   const peer = this.addPeer(payload.signal, payload.callerID, stream);
                   this.state.peersRef.push({
                     uuid: uuid(),
+                    first_name: payload.first_name,
+                    last_name: payload.last_name,
                     peerID: payload.callerID,
                     peer,
                   })
@@ -156,7 +180,7 @@ class VideoRoom extends Component {
 
               });
 
-              
+
 
               this.state.socketRef.on("someone left", id => {
 
@@ -173,9 +197,9 @@ class VideoRoom extends Component {
                 }
 
                 const removed_peers = this.state.peersRef.filter(p => p.peer._connected === true);
-                const peers = this.state.peers.filter(p=> p._connected === true);
+                const peers = this.state.peers.filter(p => p._connected === true);
 
-                this.setState({peersRef: removed_peers, peers: peers});
+                this.setState({ peersRef: removed_peers, peers: peers });
 
                 console.log("elements: ");
                 console.log(this.state.peersRef);
@@ -185,9 +209,9 @@ class VideoRoom extends Component {
             }
           ).catch(
             error => {
-              if(error.name == "NotAllowedError") alert("You must allow the app to use your Camera..")
+              if (error.name == "NotAllowedError") alert("You must allow the app to use your Camera..")
               else if (error.name == "NotFoundError") alert("Please Check your Camera or Microphone and try Again...");
-              this.setState({errorDetail: error.toString()});
+              this.setState({ errorDetail: error.toString() });
               console.log(error);
             }
           );
@@ -209,7 +233,7 @@ class VideoRoom extends Component {
     });
 
     peer.on('signal', signal => {
-      this.state.socketRef.emit("sending signal", { userToSignal, callerID, signal });
+      this.state.socketRef.emit("sending signal", { userToSignal, callerID, signal, first_name: this.state.me.first_name, last_name: this.state.me.last_name });
       console.log("signal sended");
     });
 
@@ -242,10 +266,16 @@ class VideoRoom extends Component {
             <Header></Header>
             <h2>{this.state.errorDetail}</h2>
             <Container>
-              <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
+              <StyledDiv>
+                <StyledVideo muted ref={this.lVideo} autoPlay playsInline />
+                <p>{this.state.me.first_name + " " + this.state.me.last_name}</p>
+              </StyledDiv>
               {this.state.peersRef.map((peer, index) => {
                 return (
-                  <Video key={peer.uuid} peer={peer.peer} />
+                  <StyledDiv key={peer.uuid}>
+                    <Video key={peer.uuid} peer={peer.peer} />
+                    <p key={peer.uuid}>{peer.first_name + " " + peer.last_name}</p>
+                  </StyledDiv>
                 );
               })}
             </Container>

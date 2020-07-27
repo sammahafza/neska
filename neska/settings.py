@@ -139,7 +139,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'reactapp/build/static')
+    os.path.join(BASE_DIR, 'reactapp/build/static'),
+    os.path.join(BASE_DIR, 'video_app/static/'),
+    os.path.join(BASE_DIR, 'accounts/static/'),
 ]
 
 REST_FRAMEWORK = {

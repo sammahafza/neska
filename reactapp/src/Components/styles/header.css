@@ -4,9 +4,20 @@
 }
 
 .branding {
+    display: inline-block;
     padding-top: 10px;
+    width: 50%;
     
 }
+
+.right {
+    display: inline-block;
+    padding-top: 10px;
+    width: 50%;
+    text-align: right;
+
+}
+
 
 .mini_text {
     position: relative;
@@ -20,6 +31,47 @@
 .header {
     height: 64px;
     box-shadow: 0px 1px 14px 4px #d2d2d2;
+}
+
+
+@media all and (max-width: 524px) {
+    .topheader {
+        text-align: center;
+    }
+
+
+    .header {
+        height: auto;
+    }
+
+
+    .branding {
+        display: block;
+        width: auto;
+        padding-top: 0;
+    }
+
+    .navbar-brand {
+        padding-bottom: 0;
+        margin: auto;
+        display: block;
+    }
+
+    .right {
+        display: inline-block;
+        padding-top: 10px;
+        width: auto;
+        text-align: right;
+    
+    }
+    
+    
+    .mini_text {
+        display: block;
+        left: 0;
+        top: 0;
+    }
+    
 }
 
 

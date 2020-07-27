@@ -8,14 +8,17 @@ import "./styles/main.css";
 
 class MainRoom extends Component {
 
+
+
   state = {
-    mid: '000000'
+    mid: '000000',
   };
 
   nextPath = (path) => {
     this.props.history.push(path);
   }
 
+  
   // create a meeting handler
   create = () => {
 
@@ -36,7 +39,7 @@ class MainRoom extends Component {
   render() {
     return (
       <div>
-        <Header></Header>
+        <Header />
         <div className="content_main">
         <Button className='btn btn-primary' onClick={this.create}>Create Meeting</Button>
         <h5 className="d-inline"> Or </h5>

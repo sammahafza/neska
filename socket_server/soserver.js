@@ -34,7 +34,7 @@ io.on('connection', socket => {
   // });
 
   socket.on('join room', (detail) => {
-    if(detail.id !== null) {
+    if(detail.id !== undefined) {
       users.push(detail);
       console.log(users);
       console.log('he joined the room');
@@ -59,7 +59,7 @@ io.on('connection', socket => {
 
   socket.on("sending signal", payload => {
     console.log("i'm sending signal");
-    io.to(payload.userToSignal).emit("user joined", {signal: payload.signal, callerID: payload.callerID});
+    io.to(payload.userToSignal).emit("user joined", {signal: payload.signal, callerID: payload.callerID, first_name: payload.first_name, last_name: payload.last_name});
   });
 
   socket.on("returning signal", payload => {

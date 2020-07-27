@@ -14,23 +14,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path, re_path, reverse_lazy
 from django.views.generic import TemplateView
+from django.views.generic.edit import CreateView
 
 from accounts import views as accounts_views
+from accounts.forms import RegisterForm
 from django.contrib.auth.decorators import login_required
+
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', accounts_views.register_view, name="register"),
     path('login/', accounts_views.login_view, name="login"),
     path('api/', include('video_app.urls')),
     path('', login_required(TemplateView.as_view(template_name="index.html"), 
-    login_url='login')),
+    login_url='login'), name="index"),
     # react routings...
     re_path(r'^meeting/\d+$', login_required(TemplateView.as_view(template_name="index.html"), 
     login_url='login')),
     re_path(r'^join/?$', login_required(TemplateView.as_view(template_name="index.html"), 
     login_url='login')),
+
+    re_path('^register/', CreateView.as_view(
+        template_name='accounts/register.html',
+        form_class=RegisterForm,
+        success_url=reverse_lazy('index')  # note the usage of reverse_lazy here
+    ), name='register'),
+
 ]
